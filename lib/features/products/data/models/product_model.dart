@@ -20,16 +20,22 @@ class ProductModel {
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
+    // dummyjson uses 'thumbnail'; fakestoreapi uses 'image' — support both
+    final String image =
+        (json['thumbnail'] as String?) ??
+        (json['image'] as String?) ??
+        '';
+
     return ProductModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       title: json['title'] as String,
       price: (json['price'] as num).toDouble(),
       description: json['description'] as String,
       category: json['category'] as String,
-      image: json['image'] as String,
-      rating: json['rating'] == null
-          ? null
-          : RatingModel.fromJson(json['rating'] as Map<String, dynamic>),
+      image: image,
+      rating: json['rating'] != null
+          ? RatingModel.fromJson(json['rating'])
+          : null,
     );
   }
 }
