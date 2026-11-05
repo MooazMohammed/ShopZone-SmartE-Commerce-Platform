@@ -36,7 +36,7 @@ class _HomePageViewState extends State<_HomePageView> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
-        title: const Text('New Trend'),
+        title: const Text('Shop Zone'),
         centerTitle: true,
         actions: [
           IconButton(
@@ -84,50 +84,48 @@ class _ProductsGrid extends StatelessWidget {
       builder: (context, state) {
         return switch (state) {
           ProductsInitial() ||
-          ProductsLoading() =>
-            const Center(child: CircularProgressIndicator()),
+          ProductsLoading() => const Center(child: CircularProgressIndicator()),
 
           ProductsError(:final message) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.wifi_off, size: 64, color: Colors.grey),
-                    const SizedBox(height: 16),
-                    Text(
-                      message,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () =>
-                          context.read<ProductsCubit>().fetchAllProducts(),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
-                    ),
-                  ],
-                ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.wifi_off, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () =>
+                        context.read<ProductsCubit>().fetchAllProducts(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
               ),
             ),
+          ),
 
           ProductsSuccess(:final products) when products.isEmpty =>
             const Center(child: Text('No products found')),
 
           ProductsSuccess(:final products) => GridView.builder(
-              clipBehavior: Clip.none,
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 60,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.1,
-              ),
-              itemCount: products.length,
-              itemBuilder: (context, index) =>
-                  CustomCard(product: products[index]),
+            clipBehavior: Clip.none,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 60,
+              crossAxisSpacing: 10,
+              childAspectRatio: 1.1,
             ),
+            itemCount: products.length,
+            itemBuilder: (context, index) =>
+                CustomCard(product: products[index]),
+          ),
         };
       },
     );
