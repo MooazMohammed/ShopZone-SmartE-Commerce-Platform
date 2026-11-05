@@ -9,6 +9,7 @@ import 'package:storeapp/widgets/show_message.dart';
 
 // ignore: must_be_immutable
 class UpdateProductPage extends StatefulWidget {
+  // ignore: prefer_const_constructors_in_immutables
   UpdateProductPage({super.key});
   static const id = 'update product';
 
@@ -18,7 +19,6 @@ class UpdateProductPage extends StatefulWidget {
 
 class _UpdateProductPageState extends State<UpdateProductPage> {
   String? name, description, image;
-
   String? price;
   bool isloading = false;
 
@@ -52,9 +52,7 @@ class _UpdateProductPageState extends State<UpdateProductPage> {
                 hint: 'Product name',
                 inputType: TextInputType.text,
               ),
-              const SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 15),
               CustomTextField(
                 onChanged: (p0) {
                   price = p0;
@@ -62,19 +60,15 @@ class _UpdateProductPageState extends State<UpdateProductPage> {
                 hint: 'Product price',
                 inputType: TextInputType.number,
               ),
-              const SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 15),
               CustomTextField(
                 onChanged: (p0) {
-                  description = p0;
+                  description = p0; // Fixed: was incorrectly using name
                 },
                 hint: 'Product description',
                 inputType: TextInputType.text,
               ),
-              const SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 15),
               CustomTextField(
                 onChanged: (p0) {
                   image = p0;
@@ -82,24 +76,29 @@ class _UpdateProductPageState extends State<UpdateProductPage> {
                 hint: 'Product image',
                 inputType: TextInputType.text,
               ),
-              const SizedBox(
-                height: 40,
-              ),
+              const SizedBox(height: 40),
               CustomButton(
                 Color: Colors.blue,
                 buttonText: 'update',
-                ontap: () {
-                  isloading = true;
-                  setState(() {});
+                ontap: () async {
+                  // Fixed: properly await async call and bracket loading state
+                  setState(() => isloading = true);
                   try {
-                    updateProduct(product);
-                    showMessage(context: context, text: 'Update Successfully');
-                    print(product);
+                    await updateProduct(product);
+                    if (context.mounted) {
+                      showMessage(
+                          context: context, text: 'Updated Successfully');
+                    }
                   } catch (e) {
-                    print(e.toString());
+                    if (context.mounted) {
+                      showMessage(
+                          context: context, text: 'Update failed: $e');
+                    }
+                  } finally {
+                    if (mounted) {
+                      setState(() => isloading = false);
+                    }
                   }
-                  isloading = false;
-                  setState(() {});
                 },
               ),
             ],
@@ -109,13 +108,14 @@ class _UpdateProductPageState extends State<UpdateProductPage> {
     );
   }
 
-  void updateProduct(ProductModel product) {
-    UpdateProductservice().update(
+  Future<void> updateProduct(ProductModel product) async {
+    await UpdateProductservice().update(
       id: product.id,
-      title: name == null ? product.title : name!,
-      price: price == null ? product.price.toString() : price!,
-      description: description == null ? product.description : name!,
-      image: image == null ? product.image : image!,
+      title: name ?? product.title,
+      price: price ?? product.price.toString(),
+      // Fixed: was using name! instead of description!
+      description: description ?? product.description,
+      image: image ?? product.image,
       category: product.category,
     );
   }

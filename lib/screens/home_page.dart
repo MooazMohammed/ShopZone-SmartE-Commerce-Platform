@@ -17,6 +17,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<ProductModel> allProducts = [];
   String selectedCategory = "all";
+  bool isLoading = true;
+  String? errorMessage;
 
   @override
   void initState() {
@@ -25,10 +27,26 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> fetchProducts() async {
-    final products = await GetAllProducts().getAllProducts();
     setState(() {
-      allProducts = products;
+      isLoading = true;
+      errorMessage = null;
     });
+    try {
+      final products = await GetAllProducts().getAllProducts();
+      if (mounted) {
+        setState(() {
+          allProducts = products;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          errorMessage = 'Failed to load products. Please check your connection.\n\nDetails: $e';
+          isLoading = false;
+        });
+      }
+    }
   }
 
   List<ProductModel> get filteredProducts {
@@ -79,28 +97,61 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 50),
 
             Expanded(
-              child: allProducts.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : filteredProducts.isEmpty
-                  ? const Center(child: Text('No products found'))
-                  : GridView.builder(
-                      clipBehavior: Clip.none,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 60,
-                            crossAxisSpacing: 10,
-                            childAspectRatio: 1.1,
-                          ),
-                      itemCount: filteredProducts.length,
-                      itemBuilder: (context, index) {
-                        return CustomCard(product: filteredProducts[index]);
-                      },
-                    ),
+              child: _buildBody(),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.wifi_off, size: 64, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(
+                errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: fetchProducts,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (filteredProducts.isEmpty) {
+      return const Center(child: Text('No products found'));
+    }
+
+    return GridView.builder(
+      clipBehavior: Clip.none,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 60,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.1,
+      ),
+      itemCount: filteredProducts.length,
+      itemBuilder: (context, index) {
+        return CustomCard(product: filteredProducts[index]);
+      },
     );
   }
 }

@@ -35,7 +35,8 @@ class ProductDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     ProductModel product =
         ModalRoute.of(context)!.settings.arguments as ProductModel;
-    Color productColor = colors[product.id - 1];
+    // Safe index: use modulo so any product id maps to a valid color
+    Color productColor = colors[(product.id - 1) % colors.length];
     Size size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: productColor,
@@ -62,12 +63,12 @@ class ProductDetails extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      colorAndSize(productColor: productColor),
-                      description(product: product, productColor: productColor),
+                      ColorAndSize(productColor: productColor),
+                      Description(product: product, productColor: productColor),
                       SizedBox(height: 10),
-                      cartCounter(),
+                      CartCounter(),
                       SizedBox(height: 10),
-                      addToCart(productColor: productColor,),
+                      AddToCart(productColor: productColor),
                     ],
                   ),
                 ),
@@ -81,18 +82,25 @@ class ProductDetails extends StatelessWidget {
   }
 
   Padding productTitleWithImage(BuildContext context, ProductModel product) {
+    // Safe substring — never exceed actual string length
+    final descPreview = product.description.length > 23
+        ? product.description.substring(0, 23)
+        : product.description;
+    final titlePreview = product.title.length > 10
+        ? product.title.substring(0, 10)
+        : product.title;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 17.2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            product.description.substring(0, 23),
+            descPreview,
             style: TextStyle(color: Colors.white),
           ),
-
           Text(
-            product.title.substring(0, 10),
+            titlePreview,
             style: Theme.of(context).textTheme.headlineMedium!.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -116,7 +124,6 @@ class ProductDetails extends StatelessWidget {
                   ],
                 ),
               ),
-
               SizedBox(width: 50),
               Expanded(
                 child: SizedBox(
@@ -128,7 +135,6 @@ class ProductDetails extends StatelessWidget {
                   ),
                 ),
               ),
-              // Expanded(child: Image.network(product.image), ),
             ],
           ),
         ],
@@ -155,10 +161,9 @@ class ProductDetails extends StatelessWidget {
   }
 }
 
-class addToCart extends StatelessWidget {
-  const addToCart({super.key, required this.productColor});
+class AddToCart extends StatelessWidget {
+  const AddToCart({super.key, required this.productColor});
   final Color productColor;
-
 
   @override
   Widget build(BuildContext context) {
@@ -167,12 +172,13 @@ class addToCart extends StatelessWidget {
       child: Row(
         children: [
           Padding(
-            padding: EdgeInsetsGeometry.only(right: 5),
+            // Fixed: EdgeInsetsGeometry.only() doesn't exist → EdgeInsets.only()
+            padding: EdgeInsets.only(right: 5),
             child: Container(
               height: 50,
               width: 58,
               decoration: BoxDecoration(
-                border: Border.all(color: productColor),
+                border: Border.all(color: productColor), // Fixed: BoxBorder.all → Border.all
                 borderRadius: BorderRadius.circular(18),
               ),
               child: IconButton(
@@ -199,16 +205,14 @@ class addToCart extends StatelessWidget {
   }
 }
 
-class cartCounter extends StatefulWidget {
-  const cartCounter({super.key});
-  
-
+class CartCounter extends StatefulWidget {
+  const CartCounter({super.key});
 
   @override
-  State<cartCounter> createState() => _cartCounterState();
+  State<CartCounter> createState() => _CartCounterState();
 }
 
-class _cartCounterState extends State<cartCounter> {
+class _CartCounterState extends State<CartCounter> {
   int numOfitems = 1;
   @override
   Widget build(BuildContext context) {
@@ -239,8 +243,8 @@ class _cartCounterState extends State<cartCounter> {
     );
   }
 
-  Container outlineButton(IconData icon, VoidCallback? press) {
-    return Container(
+  SizedBox outlineButton(IconData icon, VoidCallback? press) {
+    return SizedBox(
       height: 30,
       width: 32,
       child: OutlinedButton(
@@ -257,8 +261,8 @@ class _cartCounterState extends State<cartCounter> {
   }
 }
 
-class description extends StatelessWidget {
-  const description({
+class Description extends StatelessWidget {
+  const Description({
     super.key,
     required this.product,
     required this.productColor,
@@ -280,8 +284,8 @@ class description extends StatelessWidget {
   }
 }
 
-class colorAndSize extends StatelessWidget {
-  const colorAndSize({super.key, required this.productColor});
+class ColorAndSize extends StatelessWidget {
+  const ColorAndSize({super.key, required this.productColor});
   final Color productColor;
 
   @override
@@ -339,7 +343,8 @@ class ColorDot extends StatelessWidget {
       width: 24,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: BoxBorder.all(color: isSelected ? color : Colors.transparent),
+        // Fixed: BoxBorder.all → Border.all
+        border: Border.all(color: isSelected ? color : Colors.transparent),
       ),
       child: DecoratedBox(
         decoration: BoxDecoration(shape: BoxShape.circle, color: color),
